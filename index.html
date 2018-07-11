@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script src="lib/js/jquery-2.2.4.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        ul {
+            padding: 0;
+            margin: 0;
+        }
+        .hide {
+            display: none !important;
+        }
+        #main-svg {
+            height: 600px;
+            width: 100%;
+            background: #eee;
+        }
+        .r1 {
+            width: 200px;
+            height: 70px; 
+            fill: #fff;
+            stroke-width: 1px;
+            stroke: #aaa;
+        }
+        .knot {
+            fill: #fff;
+            stroke-width: 1px;
+            stroke: #aaa;
+        }
+        .cg {
+            transform: translate(100px, 100px);
+        }
+
+        .top-menu {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            background: #000;
+            color: #fff;
+        }
+
+        .top-menu > li {
+            display: inline-block;
+            padding: 10px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .top-menu > li:hover { 
+            /*background: #eee;
+            color: #000;*/
+        }
+
+        .top-menu > li:hover .sublist {
+            display: block;
+        }
+
+        .top-menu .sublist {
+            display: none;
+            list-style: none;
+            position: absolute;
+            left: 0;
+            top: 38px;
+            width: 150px;
+            background: #000;
+            color: #fff;
+        }
+
+        .top-menu .sublist li {
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <ul class="top-menu">
+        <li>File</li>
+        <li>
+            Components
+            <ul class="sublist">
+                <li id="add-component">Add Component</li>
+            </ul>
+        </li>
+        <li>Options</li>
+    </ul>
+
+
+    <svg class="hide">
+        <g id="clone-rec" class="cg">
+            <circle class="knot upper" cx="100px" cy="-5px" r="10px"></circle>
+            <circle class="knot lower" cx="100px" cy="75px" r="10px"></circle>
+            <rect class="r1"></rect>
+        </g>
+    </svg>
+
+    <svg id="main-svg">
+        <!-- <g class="cg">
+            <circle class="knot upper" cx="100px" cy="-5px" r="10px" />
+            <circle class="knot lower" cx="100px" cy="75px" r="10px" />
+            <rect class="r1"/>
+        </g> -->
+        <g class="cg">
+            <circle class="knot upper" cx="100px" cy="-5px" r="10px"></circle>
+            <circle class="knot lower" cx="100px" cy="75px" r="10px"></circle>
+            <rect class="r1"></rect>
+        </g>
+
+    </svg>
+
+    <script>
+        $(function(){
+
+            $('#main-svg').css({
+                height: ($(window).height()-100) + 'px'
+            });
+
+            var componentCount = 0;
+            $('#add-component').click(function(){
+                var newC = $('#clone-rec').clone();
+                newC.attr('id', 'component-'+ (++componentCount));
+
+                // var cloneElement = $('#clone-rec')[0].cloneNode(true);
+                // var newx = 100;
+                // var newy = 500;
+                // cloneElement.setAttributeNS(null,"x",newx);
+                // cloneElement.setAttributeNS(null,"y",newy);
+                // document.getElementById("main-svg").appendChild(cloneElement);
+
+                //console.log(newC);
+                $('#main-svg').append(newC);
+            });
+
+            var draggedEl;
+            var prevMousePos = {x: -1, y: -1};
+            
+            $(document).on('mousedown', '.cg', function (ev) {
+                draggedEl = $(this);
+                prevMousePos.x = ev.pageX;
+                prevMousePos.y = ev.pageY;
+            });
+
+            $(document).on('mousemove', function (ev) {
+                if (draggedEl) {
+                    var prevElX = parseInt(draggedEl.css('transform').split(',')[4]);
+                    var prevElY = parseInt(draggedEl.css('transform').split(',')[5]);
+                    var mouseDiffX = ev.pageX - prevMousePos.x;
+                    var mouseDiffY = ev.pageY - prevMousePos.y;
+
+                    var newElX = prevElX + mouseDiffX;
+                    var newElY = prevElY + mouseDiffY;
+
+                    var newCSSTransformVal = "matrix(1, 0, 0, 1, " + newElX + ", " + newElY + ")";
+
+                    $(draggedEl).css('transform', newCSSTransformVal);
+
+                    prevMousePos.x = ev.pageX;
+                    prevMousePos.y = ev.pageY;
+                }
+            });
+
+            $(document).on('mouseup', function () {
+                draggedEl = undefined;
+                prevMousePos = {x: -1, y: -1};
+            });
+        });
+    </script>
+</body>
+</html>
