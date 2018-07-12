@@ -104,7 +104,7 @@
     </ul>
 
 
-    <svg class="hide">
+    <svg id="allclonerefs" class="hide">
         <g id="clone-rec" class="cg">
             <circle class="knot in el" cx="100px" cy="-5px" r="10px"></circle>
             <circle class="knot out el" cx="100px" cy="75px" r="10px"></circle>
@@ -173,6 +173,10 @@
             });
 
             $(document).on('mouseup', function () {
+                if (draggedEl && prevMousePos.x > 0 && prevMousePos.y > 0) {
+                    redrawAllConnectors();
+                }
+
                 draggedEl = undefined;
                 prevMousePos = {x: -1, y: -1};
             });
@@ -195,7 +199,7 @@
                 // and prev selected is "out" node
                 // then join them
                 if($(this).hasClass('knot in') && prevSelected.hasClass('knot out')) {
-                    joinNodes(prevSelected, $(this));
+                    drawRedrawConnectors(prevSelected.closest('.cg'), $(this).closest('.cg'));
                 }
             });
 
@@ -205,15 +209,22 @@
             });
 
             // create a path between 2 knots
+            // overwrite if the path already exists
+            // each connector will have an attribute 
+            // data-ftid = "fromID---toID"
             var connectorCount = 0;
-            function joinNodes (fromKnot, toKnot) {
-                var fromX = parseInt(fromKnot.closest('.cg').css('transform').split(',')[4]) + 95;
-                var fromY = parseInt(fromKnot.closest('.cg').css('transform').split(',')[5]) + 70;
+            function drawRedrawConnectors (fromCom, toCom) {
+                if(!fromCom && !toCom) { return; }
+                var fromX = parseInt(fromCom.css('transform').split(',')[4]) + 100;
+                var fromY = parseInt(fromCom.css('transform').split(',')[5]) + 70;
 
-                var toX = parseInt(toKnot.closest('.cg').css('transform').split(',')[4]) + 95;
-                var toY = parseInt(toKnot.closest('.cg').css('transform').split(',')[5]);
+                var toX = parseInt(toCom.css('transform').split(',')[4]) + 100;
+                var toY = parseInt(toCom.css('transform').split(',')[5]);
 
-                var newConnectorClass = fromKnot.closest('.cg').attr('id') + '---' + toKnot.closest('.cg').attr('id');
+                var ftid = fromCom.attr('id') + '---' + toCom.attr('id');
+
+                //remove if existing
+                $('[data-ftid="' + ftid + '"]').remove();
 
                 var newConnector = $('#clone-connector').clone();
                 newConnector.attr({
@@ -221,13 +232,20 @@
                     x1: fromX,
                     y1: fromY,
                     x2: toX,
-                    y2: toY
+                    y2: toY,
+                    "data-ftid": ftid
                 });
 
-                $('.' + newConnectorClass).remove();
-                newConnector.addClass(newConnectorClass);
-
                 $('#main-svg').prepend(newConnector);
+            }
+
+            function redrawAllConnectors () {
+                //loop thru all the connectors and redraw
+                var ftids;
+                $('.connector').not('#clone-connector').each(function(){
+                    ftids = $(this).attr('data-ftid').split('---');
+                    drawRedrawConnectors($('#' + ftids[0]), $('#' + ftids[1]));
+                });
             }
 
             /////////////////////////////////////////////////////////
@@ -249,13 +267,32 @@
                         }
 
                         // else if it a component, delete the GROUP
-                        else {
+                        else {                            
+                            deleteAllConnectorsConnectedWith(selectedEl.closest('.cg').attr('id'));
                             selectedEl.closest('.cg').remove();
                         }
                     }
                 }
             });
+
+            // Loop thru each connector
+            // And find and delete all those connectors
+            // that are connected with the supplied componentID
+            function deleteAllConnectorsConnectedWith (comID) {
+                $('.connector').not('#clone-connector').each(function(){
+                    if($(this).attr('data-ftid').split('---').indexOf(comID) >= 0) {
+                        $(this).remove();
+                    }
+                });
+            }
             ////////////////////////////////////////////////////////
+
+            /*******************************************************
+            * DELETING ELEMENTS
+            *******************************************************/
+            //$('#allclonerefs').remove();
+            ////////////////////////////////////////////////////////
+
         });
     </script>
 </body>
