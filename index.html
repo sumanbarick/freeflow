@@ -3,10 +3,13 @@
 <head>
     <title></title>
     <script src="lib/js/jquery-2.2.4.min.js"></script>
+    <link href="lib/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet" /> -->
     <style>
         body {
             margin: 0;
             padding: 0;
+            /*font-family: 'Oswald', sans-serif;*/
         }
         ul {
             padding: 0;
@@ -20,9 +23,13 @@
             width: 100%;
             background: #eee;
         }
+        .connector {
+            stroke-width: 1px;
+            stroke: #000;
+        }
         .r1 {
-            width: 200px;
-            height: 70px; 
+            /*width: 200px;
+            height: 70px; */
             fill: #fff;
             stroke-width: 1px;
             stroke: #aaa;
@@ -65,7 +72,7 @@
             list-style: none;
             position: absolute;
             left: 0;
-            top: 38px;
+            top: 40px;
             width: 150px;
             background: #000;
             color: #fff;
@@ -73,6 +80,14 @@
 
         .top-menu .sublist li {
             padding: 5px 10px;
+        }
+
+        .top-menu .sublist li:hover {
+            background: #00f;
+        }
+
+        .el.selected-el {
+            stroke: blue;
         }
     </style>
 </head>
@@ -91,49 +106,44 @@
 
     <svg class="hide">
         <g id="clone-rec" class="cg">
-            <circle class="knot upper" cx="100px" cy="-5px" r="10px"></circle>
-            <circle class="knot lower" cx="100px" cy="75px" r="10px"></circle>
-            <rect class="r1"></rect>
+            <circle class="knot in el" cx="100px" cy="-5px" r="10px"></circle>
+            <circle class="knot out el" cx="100px" cy="75px" r="10px"></circle>
+            <rect class="r1 el" width="200px" height="70px"></rect>            
         </g>
+
+        <line id="clone-connector" x1="0" y1="0" x2="200" y2="200" class="connector"></line>
     </svg>
 
     <svg id="main-svg">
-        <!-- <g class="cg">
-            <circle class="knot upper" cx="100px" cy="-5px" r="10px" />
-            <circle class="knot lower" cx="100px" cy="75px" r="10px" />
-            <rect class="r1"/>
-        </g> -->
-        <g class="cg">
-            <circle class="knot upper" cx="100px" cy="-5px" r="10px"></circle>
-            <circle class="knot lower" cx="100px" cy="75px" r="10px"></circle>
-            <rect class="r1"></rect>
-        </g>
 
     </svg>
 
     <script>
         $(function(){
 
+            /*******************************************************
+            * All the things related to INIT
+            *******************************************************/
             $('#main-svg').css({
                 height: ($(window).height()-100) + 'px'
             });
+            //////////////////// END OF INIT ////////////////////////
 
+            /*******************************************************
+            * All the things related to ADDING COMPONENT
+            *******************************************************/
             var componentCount = 0;
             $('#add-component').click(function(){
                 var newC = $('#clone-rec').clone();
                 newC.attr('id', 'component-'+ (++componentCount));
-
-                // var cloneElement = $('#clone-rec')[0].cloneNode(true);
-                // var newx = 100;
-                // var newy = 500;
-                // cloneElement.setAttributeNS(null,"x",newx);
-                // cloneElement.setAttributeNS(null,"y",newy);
-                // document.getElementById("main-svg").appendChild(cloneElement);
-
-                //console.log(newC);
                 $('#main-svg').append(newC);
             });
+            ////////////// END OF ADDING COMPONENT //////////////////
 
+
+            /*******************************************************
+            * All the things related to DRAGGING AND REPOSITION
+            *******************************************************/
             var draggedEl;
             var prevMousePos = {x: -1, y: -1};
             
@@ -166,6 +176,63 @@
                 draggedEl = undefined;
                 prevMousePos = {x: -1, y: -1};
             });
+            //////////// END OFDRAGGING AND REPOSITION //////////////
+
+
+            /*******************************************************
+            * SELECTING AND JOINING
+            *******************************************************/
+            var prevSelected;
+            //user click on a content should make it selected
+            $(document).on('click', '.el', function (ev) {
+                ev.stopPropagation();
+                ev.preventDefault();
+                prevSelected = $('.selected-el');
+                prevSelected.removeClass('selected-el');
+                $(this).addClass('selected-el');
+
+                // if an "in" node is clicked 
+                // and prev selected is "out" node
+                // then join them
+                if($(this).hasClass('knot in') && prevSelected.hasClass('knot out')) {
+                    joinNodes(prevSelected, $(this));
+                }
+            });
+
+            //clicking on body should deselect
+            $(document).on('click', function (ev) {
+                $('.selected-el').removeClass('selected-el');
+            });
+
+            // create a path between 2 knots
+            var connectorCount = 0;
+            function joinNodes (fromKnot, toKnot) {
+                var fromX = parseInt(fromKnot.closest('.cg').css('transform').split(',')[4]) + 95;
+                var fromY = parseInt(fromKnot.closest('.cg').css('transform').split(',')[5]) + 70;
+
+                var toX = parseInt(toKnot.closest('.cg').css('transform').split(',')[4]) + 95;
+                var toY = parseInt(toKnot.closest('.cg').css('transform').split(',')[5]);
+
+                var newConnectorClass = fromKnot.closest('.cg').attr('id') + '---' + toKnot.closest('.cg').attr('id');
+
+                var newConnector = $('#clone-connector').clone();
+                newConnector.attr({
+                    id: "connector-" + (++connectorCount),
+                    x1: fromX,
+                    y1: fromY,
+                    x2: toX,
+                    y2: toY
+                });
+
+                $('.' + newConnectorClass).remove();
+                newConnector.addClass(newConnectorClass);
+
+                $('#main-svg').prepend(newConnector);
+            }
+
+            /////////////////////////////////////////////////////////
+
+
         });
     </script>
 </body>
