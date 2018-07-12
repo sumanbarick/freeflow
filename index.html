@@ -24,7 +24,7 @@
             background: #eee;
         }
         .connector {
-            stroke-width: 1px;
+            stroke-width: 2px;
             stroke: #000;
         }
         .r1 {
@@ -111,7 +111,7 @@
             <rect class="r1 el" width="200px" height="70px"></rect>            
         </g>
 
-        <line id="clone-connector" x1="0" y1="0" x2="200" y2="200" class="connector"></line>
+        <line id="clone-connector" x1="0" y1="0" x2="200" y2="200" class="connector el"></line>
     </svg>
 
     <svg id="main-svg">
@@ -232,7 +232,30 @@
 
             /////////////////////////////////////////////////////////
 
+            /*******************************************************
+            * DELETING ELEMENTS
+            *******************************************************/
+            $(document).on('keydown', function (e) {
+                //console.log(e.keyCode);
 
+                //if keyboard delete key is pressed
+                if (e.keyCode === 46) {
+                    var selectedEl = $('.selected-el');
+                    if(selectedEl) {
+
+                        // if it is a connector, straight away delete it
+                        if (selectedEl.hasClass('connector')) {
+                            selectedEl.remove();
+                        }
+
+                        // else if it a component, delete the GROUP
+                        else {
+                            selectedEl.closest('.cg').remove();
+                        }
+                    }
+                }
+            });
+            ////////////////////////////////////////////////////////
         });
     </script>
 </body>
